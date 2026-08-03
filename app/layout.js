@@ -49,14 +49,19 @@ function getRouteTitle(pathname) {
   }
 }
 
+import { Inter } from "next/font/google";
+
+const inter = Inter({ subsets: ["latin"] });
+
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <head>
         <title>MAXmybill - Company Super Admin Dashboard</title>
         <meta name="description" content="POS Company Owner Central Control & Store Management Dashboard" />
+        <link rel="icon" href="/logo.png" type="image/png" />
       </head>
-      <body>
+      <body className={inter.className}>
         <AuthProvider>
           <AppShell>{children}</AppShell>
         </AuthProvider>

@@ -30,7 +30,7 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#171D4B] via-[#1E255E] to-[#4455DF] flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen bg-[#171D4B] flex items-center justify-center p-4 relative overflow-hidden">
       {/* Background Decorative Elements */}
       <div className="absolute -top-32 -right-32 w-96 h-96 rounded-full bg-[#F07C23]/20 blur-3xl"></div>
       <div className="absolute -bottom-32 -left-32 w-96 h-96 rounded-full bg-[#4455DF]/40 blur-3xl"></div>
@@ -39,9 +39,7 @@ export default function LoginPage() {
         <div className="bg-white/95 backdrop-blur-xl rounded-3xl p-8 shadow-2xl border border-white/20">
           {/* Brand Logo Header */}
           <div className="text-center space-y-3 mb-8">
-            <div className="w-16 h-16 rounded-2xl bg-gradient-to-tr from-[#4455DF] to-[#F07C23] text-white mx-auto flex items-center justify-center text-3xl font-black shadow-xl shadow-indigo-500/30">
-              M
-            </div>
+            <img src="/logo.png" alt="MAXmybill Logo" className="h-16 mx-auto object-contain" />
             <div>
               <h1 className="text-2xl font-black text-slate-900 tracking-tight">MAXmybill</h1>
               <p className="text-xs font-semibold text-[#4455DF] flex items-center justify-center mt-1">
@@ -91,7 +89,7 @@ export default function LoginPage() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-3.5 px-4 bg-gradient-to-r from-[#4455DF] to-[#3443c7] hover:from-[#3443c7] hover:to-[#2833a6] text-white font-extrabold text-sm rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center space-x-2 transition-all transform active:scale-95 disabled:opacity-50"
+              className="w-full py-3.5 px-4 bg-[#4455DF] hover:bg-[#3443c7] text-white font-extrabold text-sm rounded-xl shadow-lg shadow-indigo-500/30 flex items-center justify-center space-x-2 transition-all transform active:scale-95 disabled:opacity-50"
             >
               <span>{loading ? "Verifying Credentials..." : "Access Control Center"}</span>
               <ArrowRight className="w-4 h-4" />

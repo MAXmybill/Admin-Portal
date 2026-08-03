@@ -5,13 +5,14 @@ import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp
 import { Store, Search, Filter, ShieldCheck, ShieldAlert, Edit, Eye, Plus, Calendar, Check, Lock, Unlock, X, Save } from "lucide-react";
 import { db } from "@/lib/firebase";
 import StoreDetailModal from "@/components/StoreDetailModal";
-import { formatDate } from "@/lib/utils";
+import { formatDate, calculateMembershipDays } from "@/lib/utils";
 
 export default function StoresPage() {
   const [stores, setStores] = useState([]);
   const [search, setSearch] = useState("");
   const [filterPlan, setFilterPlan] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [selectedStore, setSelectedStore] = useState(null);
   const [editStore, setEditStore] = useState(null);
   const [isCreatingStore, setIsCreatingStore] = useState(false);
@@ -113,6 +114,17 @@ export default function StoresPage() {
     return nameMatch && planMatch && statusMatch;
   });
 
+  const sortedStores = [...filteredStores].sort((a, b) => {
+    let dateA = a.createdAt?.seconds ? a.createdAt.seconds : 0;
+    let dateB = b.createdAt?.seconds ? b.createdAt.seconds : 0;
+    
+    if (sortOrder === "newest") return dateB - dateA;
+    if (sortOrder === "oldest") return dateA - dateB;
+    if (sortOrder === "name_asc") return (a.businessName || "").localeCompare(b.businessName || "");
+    if (sortOrder === "name_desc") return (b.businessName || "").localeCompare(a.businessName || "");
+    return 0;
+  });
+
   return (
     <div className="space-y-6">
       {/* Header Bar */}
@@ -173,6 +185,19 @@ export default function StoresPage() {
               <option value="blocked">Blocked Only</option>
             </select>
           </div>
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="font-bold text-slate-500 uppercase">Sort:</span>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="name_asc">Name (A-Z)</option>
+              <option value="name_desc">Name (Z-A)</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -183,7 +208,7 @@ export default function StoresPage() {
             <div className="inline-block animate-spin w-8 h-8 border-4 border-[#4455DF] border-t-transparent rounded-full"></div>
             <p className="text-xs text-slate-500 font-semibold mt-3">Loading store records from Firestore...</p>
           </div>
-        ) : filteredStores.length === 0 ? (
+        ) : sortedStores.length === 0 ? (
           <div className="py-16 text-center">
             <Store className="w-12 h-12 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-bold text-slate-600">No matching stores found in Firestore.</p>
@@ -201,11 +226,11 @@ export default function StoresPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filteredStores.map((store) => (
+                {sortedStores.map((store) => (
                   <tr key={store.id} className="hover:bg-slate-50/80 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-[#4455DF] to-[#F07C23] text-white flex items-center justify-center font-black text-sm shadow-md">
+                        <div className="w-10 h-10 rounded-2xl bg-[#4455DF] text-white flex items-center justify-center font-black text-sm shadow-md">
                           {store.businessName ? store.businessName[0].toUpperCase() : "S"}
                         </div>
                         <div>
@@ -218,15 +243,16 @@ export default function StoresPage() {
 
                     <td className="p-4">
                       <div className="font-bold text-slate-800">{store.ownerName || "N/A"}</div>
-                      <div className="text-xs text-slate-500">{store.phone || store.mobile || "No phone"}</div>
-                      <div className="text-[10px] text-slate-400">{store.email || "No email"}</div>
+                      <div className="text-xs text-slate-500">{store.businessPhone || store.phone || store.mobile || "No phone"}</div>
+                      <div className="text-[10px] text-slate-400">{store.businessEmail || store.email || store.ownerEmail || "No email"}</div>
                     </td>
 
                     <td className="p-4">
                       <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100 block w-max">
                         {store.plan || "Free"}
                       </span>
-                      <span className="text-[10px] text-slate-400 mt-1 block">Exp: {formatDate(store.planExpiryDate)}</span>
+                      <span className="text-[10px] text-slate-400 mt-1 block">Exp: {formatDate(store.subscriptionExpiryDate)}</span>
+                      <span className="text-[10px] text-emerald-600 font-semibold mt-0.5 block">{calculateMembershipDays(store.createdAt)} Days Member</span>
                     </td>
 
                     <td className="p-4">

@@ -51,7 +51,7 @@ export default function TicketResponseModal({ ticket, onClose, onRefresh }) {
         {/* Header */}
         <div className="bg-[#1E255E] text-white p-6 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#4455DF] to-[#F07C23] flex items-center justify-center text-white font-bold">
+            <div className="w-10 h-10 rounded-xl bg-[#4455DF] flex items-center justify-center text-white font-bold">
               <LifeBuoy className="w-5 h-5" />
             </div>
             <div>

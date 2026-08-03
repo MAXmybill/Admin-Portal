@@ -50,7 +50,7 @@ export default function Header({ setIsOpen, title = "Dashboard Overview" }) {
               <Sparkles className="w-3 h-3 mr-0.5" /> Company Control
             </div>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#4455DF] to-[#F07C23] text-white flex items-center justify-center font-black text-sm shadow-md">
+          <div className="w-9 h-9 rounded-xl bg-[#4455DF] text-white flex items-center justify-center font-black text-sm shadow-md">
             SA
           </div>
         </div>

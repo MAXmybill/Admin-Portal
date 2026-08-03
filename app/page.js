@@ -63,28 +63,7 @@ export default function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      {/* Top Banner */}
-      <div className="bg-gradient-to-r from-[#1E255E] via-[#4455DF] to-[#F07C23] rounded-3xl p-6 lg:p-8 text-white shadow-xl flex flex-col md:flex-row items-center justify-between">
-        <div className="space-y-2 text-center md:text-left">
-          <div className="inline-flex items-center space-x-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-extrabold backdrop-blur-md">
-            <Sparkles className="w-4 h-4 text-amber-300" />
-            <span>POS Central Command Hub</span>
-          </div>
-          <h1 className="text-2xl lg:text-3xl font-black tracking-tight">System Overview & Registered Stores Control</h1>
-          <p className="text-xs lg:text-sm text-indigo-100 max-w-xl">
-            Real-time live synchronization with mobile Flutter POS clients across all store locations.
-          </p>
-        </div>
-        <div className="mt-4 md:mt-0 flex space-x-3">
-          <Link
-            href="/stores"
-            className="px-5 py-2.5 rounded-2xl bg-white text-[#4455DF] font-black text-xs shadow-lg hover:bg-slate-100 transition-all flex items-center space-x-2"
-          >
-            <Store className="w-4 h-4" />
-            <span>Manage All Stores</span>
-          </Link>
-        </div>
-      </div>
+
 
       {/* KPI Stat Cards (100% Real Dynamic Calculations) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">

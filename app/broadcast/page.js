@@ -72,7 +72,7 @@ export default function BroadcastPage() {
       {/* Compose Form */}
       <div className="bg-white rounded-3xl p-6 lg:p-8 border border-slate-200 shadow-sm space-y-6">
         <div className="flex items-center space-x-3">
-          <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#4455DF] to-[#F07C23] text-white flex items-center justify-center font-bold shadow-lg">
+          <div className="w-12 h-12 rounded-2xl bg-[#4455DF] text-white flex items-center justify-center font-bold shadow-lg">
             <Megaphone className="w-6 h-6 text-white" />
           </div>
           <div>

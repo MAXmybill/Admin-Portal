@@ -11,6 +11,7 @@ export default function SupportPage() {
   const [tickets, setTickets] = useState([]);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -41,6 +42,15 @@ export default function SupportPage() {
     return queryMatch && statusMatch;
   });
 
+  const sortedTickets = [...filteredTickets].sort((a, b) => {
+    let dateA = a.createdAt?.seconds ? a.createdAt.seconds : 0;
+    let dateB = b.createdAt?.seconds ? b.createdAt.seconds : 0;
+    
+    if (sortOrder === "newest") return dateB - dateA;
+    if (sortOrder === "oldest") return dateA - dateB;
+    return 0;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -64,20 +74,32 @@ export default function SupportPage() {
         </div>
 
         <div className="flex items-center space-x-3 text-xs w-full md:w-auto">
-          <Filter className="w-3.5 h-3.5 text-slate-400" />
-          <span className="font-bold text-slate-500 uppercase">Status:</span>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
-          >
-            <option value="all">All Tickets</option>
-            <option value="open">Open (Unresolved)</option>
-            <option value="in_progress">In Progress</option>
-            <option value="resolved">Resolved</option>
-            <option value="closed">Closed</option>
-          </select>
-        </div>
+            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-bold text-slate-500 uppercase">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
+            >
+              <option value="all">All Tickets</option>
+              <option value="open">Open (Unresolved)</option>
+              <option value="in_progress">In Progress</option>
+              <option value="resolved">Resolved</option>
+              <option value="closed">Closed</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="font-bold text-slate-500 uppercase">Sort:</span>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+            </select>
+          </div>
       </div>
 
       {/* Tickets List */}
@@ -87,14 +109,14 @@ export default function SupportPage() {
             <div className="inline-block animate-spin w-8 h-8 border-4 border-[#4455DF] border-t-transparent rounded-full"></div>
             <p className="text-xs text-slate-500 font-semibold mt-3">Fetching support tickets...</p>
           </div>
-        ) : filteredTickets.length === 0 ? (
+        ) : sortedTickets.length === 0 ? (
           <div className="py-16 text-center">
             <LifeBuoy className="w-12 h-12 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-bold text-slate-600">No support tickets found.</p>
           </div>
         ) : (
           <div className="divide-y divide-slate-100">
-            {filteredTickets.map((ticket) => (
+            {sortedTickets.map((ticket) => (
               <div
                 key={ticket.id}
                 className="p-5 hover:bg-slate-50/80 transition-colors flex flex-col md:flex-row items-start md:items-center justify-between gap-4"

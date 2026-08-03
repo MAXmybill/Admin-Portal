@@ -13,7 +13,8 @@ import {
   Megaphone, 
   LogOut,
   ChevronRight,
-  ShieldAlert
+  ShieldAlert,
+  X
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -40,14 +41,14 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       {/* Brand Header */}
       <div className="h-16 flex items-center justify-between px-6 border-b border-indigo-900/60 bg-[#171D4B]">
         <div className="flex items-center space-x-3">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#4455DF] to-[#F07C23] flex items-center justify-center font-extrabold text-white text-xl shadow-lg shadow-indigo-500/30">
-            M
-          </div>
+          <img src="/logo.png" alt="MAXmybill Logo" className="h-14 object-contain" />
           <div>
-            <h1 className="font-black text-lg tracking-wider text-white">MAXmybill</h1>
-            <p className="text-[10px] text-indigo-300 tracking-widest font-semibold uppercase">Company Owner Admin</p>
+            <p className="text-[10px] text-indigo-300 tracking-widest font-semibold uppercase mt-1">Company Owner Admin</p>
           </div>
         </div>
+        <button className="lg:hidden text-indigo-300 hover:text-white" onClick={() => setIsOpen(false)}>
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
       {/* Navigation Links */}

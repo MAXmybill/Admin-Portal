@@ -95,7 +95,7 @@ export default function StoreDetailModal({ store, onClose }) {
         {/* Header */}
         <div className="bg-[#1E255E] text-white p-6 flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 rounded-2xl bg-gradient-to-tr from-[#4455DF] to-[#F07C23] flex items-center justify-center text-white font-extrabold text-xl shadow-lg">
+            <div className="w-12 h-12 rounded-2xl bg-[#4455DF] flex items-center justify-center text-white font-extrabold text-xl shadow-lg">
               {store.businessName ? store.businessName[0].toUpperCase() : "S"}
             </div>
             <div>
@@ -157,7 +157,10 @@ export default function StoreDetailModal({ store, onClose }) {
                     <div className="space-y-2 text-sm">
                       <div className="flex justify-between"><span className="text-slate-500">Business Name:</span> <span className="font-bold text-slate-800">{store.businessName || "N/A"}</span></div>
                       <div className="flex justify-between"><span className="text-slate-500">Owner Name:</span> <span className="font-semibold text-slate-800">{store.ownerName || "N/A"}</span></div>
-                      <div className="flex justify-between"><span className="text-slate-500">Phone:</span> <span className="font-semibold text-slate-800">{store.phone || store.mobile || "N/A"}</span></div>
+                      <div className="flex justify-between"><span className="text-slate-500">Phone:</span> <span className="font-semibold text-slate-800">{store.businessPhone || store.phone || store.mobile || "N/A"}</span></div>
+                      {store.phoneHistory && store.phoneHistory.length > 0 && (
+                        <div className="flex justify-between"><span className="text-slate-500">Past Phones:</span> <span className="font-semibold text-slate-600 text-xs text-right max-w-[60%]">{store.phoneHistory.join(', ')}</span></div>
+                      )}
                       <div className="flex justify-between"><span className="text-slate-500">Email:</span> <span className="font-semibold text-slate-800">{store.email || "N/A"}</span></div>
                       <div className="flex justify-between"><span className="text-slate-500">GST Number:</span> <span className="font-mono text-slate-800">{store.gstin || store.gstNumber || "N/A"}</span></div>
                       <div className="flex justify-between"><span className="text-slate-500">Address:</span> <span className="font-semibold text-slate-800">{store.address || "N/A"}</span></div>

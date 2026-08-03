@@ -2,10 +2,10 @@
 
 export default function StatCard({ title, value, icon: Icon, change, changeType = "increase", subtext = "", color = "indigo" }) {
   const colorMap = {
-    indigo: "from-[#4455DF] to-indigo-600 text-white shadow-indigo-500/20",
-    orange: "from-[#F07C23] to-amber-500 text-white shadow-orange-500/20",
-    emerald: "from-emerald-500 to-teal-600 text-white shadow-emerald-500/20",
-    rose: "from-rose-500 to-pink-600 text-white shadow-rose-500/20",
+    indigo: "bg-[#4455DF] text-white shadow-indigo-500/20",
+    orange: "bg-[#F07C23] text-white shadow-orange-500/20",
+    emerald: "bg-emerald-500 text-white shadow-emerald-500/20",
+    rose: "bg-rose-500 text-white shadow-rose-500/20",
   };
 
   return (
@@ -26,7 +26,7 @@ export default function StatCard({ title, value, icon: Icon, change, changeType 
             </p>
           )}
         </div>
-        <div className={`w-12 h-12 rounded-2xl bg-gradient-to-tr ${colorMap[color]} flex items-center justify-center shadow-lg`}>
+        <div className={`w-12 h-12 rounded-2xl ${colorMap[color]} flex items-center justify-center shadow-lg`}>
           <Icon className="w-6 h-6 text-white" />
         </div>
       </div>

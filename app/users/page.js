@@ -10,6 +10,7 @@ export default function UsersPage() {
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [sortOrder, setSortOrder] = useState("newest");
   const [loading, setLoading] = useState(true);
   const [editUser, setEditUser] = useState(null);
   const [editRole, setEditRole] = useState("owner");
@@ -80,6 +81,17 @@ export default function UsersPage() {
     return searchMatch && roleMatch;
   });
 
+  const sortedUsers = [...filteredUsers].sort((a, b) => {
+    let dateA = a.createdAt?.seconds ? a.createdAt.seconds : 0;
+    let dateB = b.createdAt?.seconds ? b.createdAt.seconds : 0;
+    
+    if (sortOrder === "newest") return dateB - dateA;
+    if (sortOrder === "oldest") return dateA - dateB;
+    if (sortOrder === "name_asc") return (a.name || "").localeCompare(b.name || "");
+    if (sortOrder === "name_desc") return (b.name || "").localeCompare(a.name || "");
+    return 0;
+  });
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -102,20 +114,34 @@ export default function UsersPage() {
           />
         </div>
 
-        <div className="flex items-center space-x-3 text-xs w-full md:w-auto">
-          <Filter className="w-3.5 h-3.5 text-slate-400" />
-          <span className="font-bold text-slate-500 uppercase">Role:</span>
-          <select
-            value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
-          >
-            <option value="all">All Roles</option>
-            <option value="owner">Store Owners</option>
-            <option value="staff">Staff / Cashiers</option>
-            <option value="admin">Admins</option>
-          </select>
-        </div>
+          <div className="flex items-center space-x-3 text-xs w-full md:w-auto">
+            <Filter className="w-3.5 h-3.5 text-slate-400" />
+            <span className="font-bold text-slate-500 uppercase">Role:</span>
+            <select
+              value={roleFilter}
+              onChange={(e) => setRoleFilter(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
+            >
+              <option value="all">All Roles</option>
+              <option value="owner">Store Owners</option>
+              <option value="staff">Staff / Cashiers</option>
+              <option value="admin">Admins</option>
+            </select>
+          </div>
+
+          <div className="flex items-center space-x-2 text-xs">
+            <span className="font-bold text-slate-500 uppercase">Sort:</span>
+            <select
+              value={sortOrder}
+              onChange={(e) => setSortOrder(e.target.value)}
+              className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-semibold text-slate-700 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
+            >
+              <option value="newest">Newest First</option>
+              <option value="oldest">Oldest First</option>
+              <option value="name_asc">Name (A-Z)</option>
+              <option value="name_desc">Name (Z-A)</option>
+            </select>
+          </div>
       </div>
 
       {/* Users Table */}
@@ -125,7 +151,7 @@ export default function UsersPage() {
             <div className="inline-block animate-spin w-8 h-8 border-4 border-[#4455DF] border-t-transparent rounded-full"></div>
             <p className="text-xs text-slate-500 font-semibold mt-3">Fetching user records from Firestore...</p>
           </div>
-        ) : filteredUsers.length === 0 ? (
+        ) : sortedUsers.length === 0 ? (
           <div className="py-16 text-center">
             <Users className="w-12 h-12 text-slate-300 mx-auto mb-2" />
             <p className="text-sm font-bold text-slate-600">No users found matching query.</p>
@@ -145,7 +171,7 @@ export default function UsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {filteredUsers.map((user) => (
+                {sortedUsers.map((user) => (
                   <tr key={user.id} className="hover:bg-slate-50 transition-colors">
                     <td className="p-4">
                       <div className="flex items-center space-x-3">
