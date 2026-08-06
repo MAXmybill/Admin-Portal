@@ -20,6 +20,7 @@ export default function StoresPage() {
 
   // Edit Plan Form State
   const [editPlan, setEditPlan] = useState("");
+  const [editExpiryDate, setEditExpiryDate] = useState("");
   const [saving, setSaving] = useState(false);
 
   // New Store Form State
@@ -52,6 +53,19 @@ export default function StoresPage() {
   const handleOpenEdit = (store) => {
     setEditStore(store);
     setEditPlan(store.plan || "Free");
+    
+    let expDate = "";
+    if (store.subscriptionExpiryDate) {
+      let d;
+      if (store.subscriptionExpiryDate.toDate) d = store.subscriptionExpiryDate.toDate();
+      else if (store.subscriptionExpiryDate.seconds) d = new Date(store.subscriptionExpiryDate.seconds * 1000);
+      else d = new Date(store.subscriptionExpiryDate);
+      
+      if (!isNaN(d.getTime())) {
+        expDate = d.toISOString().split('T')[0];
+      }
+    }
+    setEditExpiryDate(expDate);
   };
 
   const handleSaveStorePlan = async (e) => {
@@ -59,9 +73,13 @@ export default function StoresPage() {
     if (!editStore) return;
     setSaving(true);
     try {
-      await updateDoc(doc(db, "store", editStore.id), {
+      const updateData = {
         plan: editPlan,
-      });
+      };
+      if (editExpiryDate) {
+        updateData.subscriptionExpiryDate = editExpiryDate;
+      }
+      await updateDoc(doc(db, "store", editStore.id), updateData);
       setEditStore(null);
     } catch (err) {
       console.error("Error updating store plan:", err);
@@ -332,6 +350,16 @@ export default function StoresPage() {
                   <option value="MAX Plus">MAX Plus</option>
                   <option value="MAX Pro">MAX Pro</option>
                 </select>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Expiry Date</label>
+                <input
+                  type="date"
+                  value={editExpiryDate}
+                  onChange={(e) => setEditExpiryDate(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold text-slate-800 focus:ring-2 focus:ring-[#4455DF]"
+                />
               </div>
 
               <div className="flex justify-end space-x-3 pt-2">
