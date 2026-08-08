@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { AuthProvider, useAuth } from "@/context/AuthContext";
 import Sidebar from "@/components/Sidebar";
 import Header from "@/components/Header";
@@ -9,11 +9,31 @@ import "./globals.css";
 
 function AppShell({ children }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { user, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const isLoginPage = pathname === "/login";
 
+  useEffect(() => {
+    if (!loading && !user && !isLoginPage) {
+      router.push("/login");
+    }
+  }, [user, loading, isLoginPage, router]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#F4F7FA] flex items-center justify-center">
+        <div className="inline-block animate-spin w-8 h-8 border-4 border-[#4455DF] border-t-transparent rounded-full"></div>
+      </div>
+    );
+  }
+
   if (isLoginPage) {
     return <main className="min-h-screen bg-[#F4F7FA]">{children}</main>;
+  }
+
+  if (!user && !isLoginPage) {
+    return null; // Prevent flash of dashboard content while redirecting
   }
 
   return (

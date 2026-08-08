@@ -3,7 +3,8 @@
 import { createContext, useContext, useEffect, useState } from "react";
 import { 
   onAuthStateChanged, 
-  signInWithEmailAndPassword, 
+  signInWithPopup,
+  GoogleAuthProvider,
   signOut as firebaseSignOut 
 } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
@@ -24,6 +25,14 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser && currentUser.email !== 'maxmybillapp@gmail.com') {
+        await firebaseSignOut(auth);
+        setUser(null);
+        setUserDoc(null);
+        setLoading(false);
+        return;
+      }
+
       setUser(currentUser);
       if (currentUser) {
         try {
@@ -47,14 +56,22 @@ export function AuthProvider({ children }) {
     return () => unsubscribe();
   }, []);
 
-  const login = async (email, password) => {
-    return signInWithEmailAndPassword(auth, email, password);
+  const login = async () => {
+    const provider = new GoogleAuthProvider();
+    const result = await signInWithPopup(auth, provider);
+    
+    if (result.user.email !== 'maxmybillapp@gmail.com') {
+      await firebaseSignOut(auth);
+      throw new Error('Unauthorized email. Access denied.');
+    }
+    return result;
   };
 
   const logout = async () => {
     setUser(null);
     setUserDoc(null);
-    return firebaseSignOut(auth);
+    await firebaseSignOut(auth);
+    if (typeof window !== 'undefined') window.location.href = '/login';
   };
 
   return (
