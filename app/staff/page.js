@@ -188,7 +188,7 @@ export default function StaffPage() {
           {isSuperAdmin && (
             <button
               onClick={() => setIsAddModalOpen(true)}
-              className="px-4 py-2 bg-[#4455DF] text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md flex items-center space-x-1"
+              className="w-full md:w-auto justify-center px-4 py-2 bg-[#4455DF] text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md flex items-center space-x-1"
             >
               <span>+ Add Staff</span>
             </button>
@@ -323,7 +323,7 @@ export default function StaffPage() {
       {/* IAM Modal */}
       {editUser && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <div>
                 <h3 className="text-lg font-black text-slate-900">IAM Permissions</h3>
@@ -418,7 +418,7 @@ export default function StaffPage() {
       {/* Add Staff Modal */}
       {isAddModalOpen && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-5 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <div>
                 <h3 className="text-lg font-black text-slate-900">Add New Staff</h3>

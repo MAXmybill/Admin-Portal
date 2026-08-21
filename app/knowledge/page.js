@@ -104,7 +104,7 @@ export default function KnowledgePage() {
           {hasEditAccess && (
             <button
               onClick={handleOpenCreate}
-              className="px-4 py-2 bg-[#4455DF] text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md flex items-center space-x-1 whitespace-nowrap"
+              className="w-full md:w-auto justify-center px-4 py-2 bg-[#4455DF] text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md flex items-center space-x-1 whitespace-nowrap"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>New Article</span>

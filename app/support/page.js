@@ -75,7 +75,8 @@ export default function SupportPage() {
           />
         </div>
 
-        <div className="flex items-center space-x-3 text-xs w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center space-x-3 text-xs w-full sm:w-auto">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <span className="font-bold text-slate-500 uppercase">Status:</span>
             <select
@@ -91,7 +92,7 @@ export default function SupportPage() {
             </select>
           </div>
 
-          <div className="flex items-center space-x-2 text-xs">
+          <div className="flex items-center space-x-2 text-xs w-full sm:w-auto">
             <span className="font-bold text-slate-500 uppercase">Sort:</span>
             <select
               value={sortOrder}
@@ -102,6 +103,7 @@ export default function SupportPage() {
               <option value="oldest">Oldest First</option>
             </select>
           </div>
+        </div>
       </div>
 
       {/* Tickets List */}

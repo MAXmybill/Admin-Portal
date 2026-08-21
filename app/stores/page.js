@@ -340,7 +340,7 @@ export default function StoresPage() {
       {/* Edit Store Plan Modal */}
       {editStore && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <h3 className="text-lg font-black text-slate-900">Update Subscription Tier</h3>
             <p className="text-xs text-slate-500">Store: <span className="font-bold text-slate-800">{editStore.businessName}</span></p>
 
@@ -394,7 +394,7 @@ export default function StoresPage() {
       {/* Register New Store Modal */}
       {isCreatingStore && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="text-lg font-black text-slate-900">Register New POS Store</h3>
               <button onClick={() => setIsCreatingStore(false)} className="p-1 text-slate-400 hover:text-slate-700">
@@ -415,7 +415,7 @@ export default function StoresPage() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Owner Full Name</label>
                   <input
@@ -440,7 +440,7 @@ export default function StoresPage() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-bold text-slate-600 uppercase mb-1">Email Address</label>
                   <input

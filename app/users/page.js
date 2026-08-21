@@ -118,7 +118,8 @@ export default function UsersPage() {
           />
         </div>
 
-          <div className="flex items-center space-x-3 text-xs w-full md:w-auto">
+        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+          <div className="flex items-center space-x-3 text-xs w-full sm:w-auto">
             <Filter className="w-3.5 h-3.5 text-slate-400" />
             <span className="font-bold text-slate-500 uppercase">Role:</span>
             <select
@@ -133,7 +134,7 @@ export default function UsersPage() {
             </select>
           </div>
 
-          <div className="flex items-center space-x-2 text-xs">
+          <div className="flex items-center space-x-2 text-xs w-full sm:w-auto">
             <span className="font-bold text-slate-500 uppercase">Sort:</span>
             <select
               value={sortOrder}
@@ -146,6 +147,7 @@ export default function UsersPage() {
               <option value="name_desc">Name (Z-A)</option>
             </select>
           </div>
+        </div>
       </div>
 
       {/* Users Table */}
@@ -273,7 +275,7 @@ export default function UsersPage() {
       {/* Edit User Modal */}
       {editUser && typeof document !== 'undefined' && createPortal(
         <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
+          <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="text-lg font-black text-slate-900">Edit User Account</h3>
               <button onClick={() => setEditUser(null)} className="p-1 text-slate-400 hover:text-slate-700">
