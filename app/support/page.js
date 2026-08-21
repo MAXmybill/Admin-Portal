@@ -6,6 +6,7 @@ import { LifeBuoy, Search, Filter, MessageSquare, Trash2 } from "lucide-react";
 import { db } from "@/lib/firebase";
 import TicketResponseModal from "@/components/TicketResponseModal";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SupportPage() {
   const [tickets, setTickets] = useState([]);
@@ -14,6 +15,7 @@ export default function SupportPage() {
   const [sortOrder, setSortOrder] = useState("newest");
   const [selectedTicket, setSelectedTicket] = useState(null);
   const [loading, setLoading] = useState(true);
+  const { hasEditAccess } = useAuth();
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, "support_requests"), (snapshot) => {
@@ -155,16 +157,18 @@ export default function SupportPage() {
                     className="px-4 py-2 rounded-xl bg-[#4455DF] hover:bg-indigo-700 text-white font-extrabold text-xs shadow-md shadow-indigo-500/20 flex items-center space-x-1.5 transition-all"
                   >
                     <MessageSquare className="w-4 h-4" />
-                    <span>{ticket.replies?.length > 0 ? "View & Reply" : "Respond"}</span>
+                    <span>{!hasEditAccess ? "View Details" : ticket.replies?.length > 0 ? "View & Reply" : "Respond"}</span>
                   </button>
 
-                  <button
-                    onClick={() => handleDeleteTicket(ticket.id)}
-                    title="Delete Ticket"
-                    className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  {hasEditAccess && (
+                    <button
+                      onClick={() => handleDeleteTicket(ticket.id)}
+                      title="Delete Ticket"
+                      className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
@@ -174,7 +178,7 @@ export default function SupportPage() {
 
       {/* Response Modal */}
       {selectedTicket && (
-        <TicketResponseModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} />
+        <TicketResponseModal ticket={selectedTicket} onClose={() => setSelectedTicket(null)} hasEditAccess={hasEditAccess} />
       )}
     </div>
   );

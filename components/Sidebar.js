@@ -14,7 +14,8 @@ import {
   LogOut,
   ChevronRight,
   ShieldAlert,
-  X
+  X,
+  Briefcase
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -22,6 +23,7 @@ const navItems = [
   { name: "Dashboard", href: "/", icon: LayoutDashboard },
   { name: "Stores Directory", href: "/stores", icon: Store },
   { name: "User Management", href: "/users", icon: Users },
+  { name: "Company Staff", href: "/staff", icon: Briefcase },
   { name: "Support Desk", href: "/support", icon: LifeBuoy },
   { name: "Knowledge Base", href: "/knowledge", icon: BookOpen },
   { name: "System Settings", href: "/settings", icon: Wrench },
@@ -30,7 +32,7 @@ const navItems = [
 
 export default function Sidebar({ isOpen, setIsOpen }) {
   const pathname = usePathname();
-  const { logout, user } = useAuth();
+  const { logout, user, isSuperAdmin } = useAuth();
 
   return (
     <aside
@@ -54,6 +56,8 @@ export default function Sidebar({ isOpen, setIsOpen }) {
       {/* Navigation Links */}
       <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-1">
         {navItems.map((item) => {
+          if (item.href === "/staff" && !isSuperAdmin) return null;
+          
           const Icon = item.icon;
           const isActive = pathname === item.href;
           return (

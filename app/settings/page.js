@@ -2,8 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
-import { Wrench, ShieldAlert, Save, RefreshCw, AlertTriangle, Smartphone, BellRing } from "lucide-react";
+import { Wrench, ShieldAlert, Save, RefreshCw, AlertTriangle, Smartphone, BellRing, Lock } from "lucide-react";
 import { db } from "@/lib/firebase";
+import { useAuth } from "@/context/AuthContext";
 
 export default function SettingsPage() {
   const [maintenance, setMaintenance] = useState(false);
@@ -12,6 +13,9 @@ export default function SettingsPage() {
   const [forceUpdate, setForceUpdate] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+
+  const { isSuperAdmin, hasEditAccess, userDoc } = useAuth();
+  const canModifySettings = isSuperAdmin || (hasEditAccess && userDoc?.permissions?.canModifySettings);
 
   useEffect(() => {
     async function fetchSettings() {
@@ -57,7 +61,14 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-4xl">
       <div>
-        <h1 className="text-2xl font-black text-slate-900 tracking-tight">System Maintenance & Global Settings</h1>
+        <h1 className="text-2xl font-black text-slate-900 tracking-tight flex items-center">
+          System Maintenance & Global Settings
+          {!canModifySettings && (
+            <span className="ml-3 px-2 py-1 bg-slate-100 text-slate-500 rounded-md text-[10px] uppercase font-bold flex items-center">
+              <Lock className="w-3 h-3 mr-1" /> View Only
+            </span>
+          )}
+        </h1>
         <p className="text-xs text-slate-500 font-medium">Control system locks, minimum app version requirements, and global notice banners</p>
       </div>
 
@@ -80,9 +91,10 @@ export default function SettingsPage() {
                 type="checkbox"
                 checked={maintenance}
                 onChange={(e) => setMaintenance(e.target.checked)}
+                disabled={!canModifySettings}
                 className="sr-only peer"
               />
-              <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-600"></div>
+              <div className="w-14 h-7 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-6 after:w-6 after:transition-all peer-checked:bg-rose-600 peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
             </label>
           </div>
 
@@ -113,8 +125,9 @@ export default function SettingsPage() {
                 type="text"
                 value={minVersion}
                 onChange={(e) => setMinVersion(e.target.value)}
+                disabled={!canModifySettings}
                 placeholder="1.1.0"
-                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 font-mono font-bold text-slate-800 focus:ring-2 focus:ring-[#4455DF]"
+                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 font-mono font-bold text-slate-800 focus:ring-2 focus:ring-[#4455DF] disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>
 
@@ -128,9 +141,10 @@ export default function SettingsPage() {
                   type="checkbox"
                   checked={forceUpdate}
                   onChange={(e) => setForceUpdate(e.target.checked)}
+                  disabled={!canModifySettings}
                   className="sr-only peer"
                 />
-                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4455DF]"></div>
+                <div className="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#4455DF] peer-disabled:opacity-50 peer-disabled:cursor-not-allowed"></div>
               </label>
             </div>
           </div>
@@ -153,23 +167,26 @@ export default function SettingsPage() {
               rows={3}
               value={alertMessage}
               onChange={(e) => setAlertMessage(e.target.value)}
+              disabled={!canModifySettings}
               placeholder="e.g. Scheduled server maintenance tonight from 2:00 AM to 3:00 AM IST."
-              className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:ring-2 focus:ring-[#4455DF]"
+              className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:ring-2 focus:ring-[#4455DF] disabled:opacity-50 disabled:cursor-not-allowed"
             ></textarea>
           </div>
         </div>
 
         {/* Save Button */}
-        <div className="flex justify-end">
-          <button
-            type="submit"
-            disabled={saving}
-            className="px-6 py-3 bg-[#4455DF] hover:bg-indigo-700 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-indigo-500/30 flex items-center space-x-2 transition-all disabled:opacity-50"
-          >
-            <Save className="w-4 h-4" />
-            <span>{saving ? "Updating System Settings..." : "Save System Settings"}</span>
-          </button>
-        </div>
+        {canModifySettings && (
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-6 py-3 bg-[#4455DF] hover:bg-indigo-700 text-white font-extrabold text-xs rounded-2xl shadow-lg shadow-indigo-500/30 flex items-center space-x-2 transition-all disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              <span>{saving ? "Updating System Settings..." : "Save System Settings"}</span>
+            </button>
+          </div>
+        )}
       </form>
     </div>
   );

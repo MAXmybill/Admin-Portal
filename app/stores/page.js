@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp } from "firebase/firestore";
 import { Store, Search, Filter, ShieldCheck, ShieldAlert, Edit, Eye, Plus, Calendar, Check, Lock, Unlock, X, Save } from "lucide-react";
 import { db } from "@/lib/firebase";
 import StoreDetailModal from "@/components/StoreDetailModal";
 import { formatDate, calculateMembershipDays } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function StoresPage() {
   const [stores, setStores] = useState([]);
@@ -17,6 +19,8 @@ export default function StoresPage() {
   const [editStore, setEditStore] = useState(null);
   const [isCreatingStore, setIsCreatingStore] = useState(false);
   const [loading, setLoading] = useState(true);
+  
+  const { hasEditAccess } = useAuth();
 
   // Edit Plan Form State
   const [editPlan, setEditPlan] = useState("");
@@ -152,13 +156,17 @@ export default function StoresPage() {
           <p className="text-xs text-slate-500 font-medium">Manage POS store accounts, update plan subscriptions, and inspect live store data</p>
         </div>
 
-        <button
-          onClick={() => setIsCreatingStore(true)}
-          className="px-5 py-2.5 bg-[#4455DF] hover:bg-indigo-700 text-white font-black text-xs rounded-2xl shadow-lg shadow-indigo-500/30 flex items-center space-x-2 transition-all"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Register New Store</span>
-        </button>
+        <div className="flex flex-col md:flex-row items-center space-y-3 md:space-y-0 md:space-x-3 w-full md:w-auto">
+          {hasEditAccess && (
+            <button
+              onClick={() => setIsCreatingStore(true)}
+              className="w-full md:w-auto px-5 py-2.5 bg-[#4455DF] text-white text-xs font-bold rounded-xl hover:bg-indigo-700 transition-colors shadow-md flex items-center justify-center space-x-2"
+            >
+              <Plus className="w-4 h-4" />
+              <span>Add New Store</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Filters Bar */}
@@ -236,11 +244,11 @@ export default function StoresPage() {
             <table className="w-full text-left text-sm">
               <thead className="bg-slate-50 text-xs font-extrabold text-slate-500 uppercase border-b border-slate-200">
                 <tr>
-                  <th className="p-4">Business Store Name</th>
-                  <th className="p-4">Owner & Contact</th>
-                  <th className="p-4">Plan & Expiry</th>
-                  <th className="p-4">Account Status</th>
-                  <th className="p-4 text-right">Super Admin Control</th>
+                  <th className="p-4">Business Details</th>
+                  <th className="p-4">Owner Info</th>
+                  <th className="p-4">Plan & Status</th>
+                  <th className="p-4">Timeline</th>
+                  <th className="p-4 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
@@ -266,58 +274,57 @@ export default function StoresPage() {
                     </td>
 
                     <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100 block w-max">
+                      <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100 block w-max mb-1">
                         {store.plan || "Free"}
                       </span>
-                      <span className="text-[10px] text-slate-400 mt-1 block">Exp: {formatDate(store.subscriptionExpiryDate)}</span>
-                      <span className="text-[10px] text-emerald-600 font-semibold mt-0.5 block">{calculateMembershipDays(store.createdAt)} Days Member</span>
-                    </td>
-
-                    <td className="p-4">
                       <span
-                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold ${
+                        className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
                           store.isActive !== false
-                            ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                            : "bg-rose-50 text-rose-700 border border-rose-200"
+                            ? "bg-emerald-50 text-emerald-700"
+                            : "bg-rose-50 text-rose-700"
                         }`}
                       >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full mr-1.5 ${
-                            store.isActive !== false ? "bg-emerald-500" : "bg-rose-500"
-                          }`}
-                        ></span>
                         {store.isActive !== false ? "Active" : "Blocked"}
                       </span>
                     </td>
 
-                    <td className="p-4 text-right space-x-2">
-                      <button
-                        onClick={() => setSelectedStore(store)}
-                        title="Inspect Store Data"
-                        className="p-2 rounded-xl bg-indigo-50 hover:bg-[#4455DF] hover:text-white text-[#4455DF] transition-colors"
-                      >
-                        <Eye className="w-4 h-4" />
-                      </button>
+                    <td className="p-4 text-[10px] text-slate-500">
+                      <div>Exp: {formatDate(store.subscriptionExpiryDate)}</div>
+                      <div className="font-semibold text-emerald-600">{calculateMembershipDays(store.createdAt)} Days Member</div>
+                    </td>
 
-                      <button
-                        onClick={() => handleOpenEdit(store)}
-                        title="Edit Subscription Plan"
-                        className="p-2 rounded-xl bg-amber-50 hover:bg-[#F07C23] hover:text-white text-[#F07C23] transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-
-                      <button
-                        onClick={() => handleToggleStatus(store.id, store.isActive)}
-                        title={store.isActive !== false ? "Block Store" : "Activate Store"}
-                        className={`p-2 rounded-xl transition-colors ${
-                          store.isActive !== false
-                            ? "bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600"
-                            : "bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600"
-                        }`}
-                      >
-                        {store.isActive !== false ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
-                      </button>
+                    <td className="p-4 text-right">
+                      <div className="flex justify-end space-x-2">
+                        <button
+                          onClick={() => setSelectedStore(store)}
+                          title="View Details"
+                          className="p-2 rounded-lg bg-indigo-50 text-[#4455DF] hover:bg-[#4455DF] hover:text-white transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                        {hasEditAccess && (
+                          <>
+                            <button
+                              onClick={() => handleOpenEdit(store)}
+                              title="Edit Plan & Expiry"
+                              className="p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white transition-colors"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleToggleStatus(store.id, store.isActive)}
+                              title={store.isActive !== false ? "Deactivate Store" : "Activate Store"}
+                              className={`p-2 rounded-lg transition-colors ${
+                                store.isActive !== false
+                                  ? "bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white"
+                                  : "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
+                              }`}
+                            >
+                              {store.isActive !== false ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
+                            </button>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -331,8 +338,8 @@ export default function StoresPage() {
       {selectedStore && <StoreDetailModal store={selectedStore} onClose={() => setSelectedStore(null)} />}
 
       {/* Edit Store Plan Modal */}
-      {editStore && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      {editStore && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <h3 className="text-lg font-black text-slate-900">Update Subscription Tier</h3>
             <p className="text-xs text-slate-500">Store: <span className="font-bold text-slate-800">{editStore.businessName}</span></p>
@@ -380,12 +387,13 @@ export default function StoresPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Register New Store Modal */}
-      {isCreatingStore && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      {isCreatingStore && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-lg p-6 shadow-2xl space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="text-lg font-black text-slate-900">Register New POS Store</h3>
@@ -488,7 +496,8 @@ export default function StoresPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

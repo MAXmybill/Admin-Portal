@@ -1,10 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { collection, onSnapshot, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { Users, Search, Filter, ShieldAlert, ShieldCheck, Lock, Unlock, Mail, Phone, Store, Edit, Trash2, X, Save } from "lucide-react";
 import { db } from "@/lib/firebase";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/context/AuthContext";
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -13,6 +15,8 @@ export default function UsersPage() {
   const [sortOrder, setSortOrder] = useState("newest");
   const [loading, setLoading] = useState(true);
   const [editUser, setEditUser] = useState(null);
+  
+  const { hasEditAccess } = useAuth();
   const [editRole, setEditRole] = useState("owner");
   const [editStoreId, setEditStoreId] = useState("");
   const [saving, setSaving] = useState(false);
@@ -167,7 +171,7 @@ export default function UsersPage() {
                   <th className="p-4">Role</th>
                   <th className="p-4">Status</th>
                   <th className="p-4">Registered Date</th>
-                  <th className="p-4 text-right">Actions</th>
+                  {hasEditAccess && <th className="p-4 text-right">Actions</th>}
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
@@ -227,35 +231,37 @@ export default function UsersPage() {
 
                     <td className="p-4 text-xs text-slate-500">{formatDate(user.createdAt)}</td>
 
-                    <td className="p-4 text-right space-x-2">
-                      <button
-                        onClick={() => handleOpenEditUser(user)}
-                        title="Edit User Role & Store"
-                        className="p-1.5 rounded-lg bg-indigo-50 hover:bg-[#4455DF] hover:text-white text-[#4455DF] transition-colors"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
+                    {hasEditAccess && (
+                      <td className="p-4 text-right space-x-2">
+                        <button
+                          onClick={() => handleOpenEditUser(user)}
+                          title="Edit User Data"
+                          className="p-1.5 rounded-lg bg-indigo-50 hover:bg-[#4455DF] hover:text-white text-[#4455DF] transition-colors"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
 
-                      <button
-                        onClick={() => handleToggleBlockUser(user.id, user.isBlocked)}
-                        title={user.isBlocked ? "Unblock Account" : "Block User"}
-                        className={`p-1.5 rounded-lg transition-colors ${
-                          user.isBlocked
-                            ? "bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600"
-                            : "bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-600"
-                        }`}
-                      >
-                        {user.isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-                      </button>
+                        <button
+                          onClick={() => handleToggleBlockUser(user.id, user.isBlocked)}
+                          title={user.isBlocked ? "Unblock User" : "Block User"}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            user.isBlocked
+                              ? "bg-emerald-50 hover:bg-emerald-600 hover:text-white text-emerald-600"
+                              : "bg-amber-50 hover:bg-amber-600 hover:text-white text-amber-600"
+                          }`}
+                        >
+                          {user.isBlocked ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
+                        </button>
 
-                      <button
-                        onClick={() => handleDeleteUserDoc(user.id)}
-                        title="Delete User Record"
-                        className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </td>
+                        <button
+                          onClick={() => handleDeleteUserDoc(user.id)}
+                          title="Delete User Permanently"
+                          className="p-1.5 rounded-lg bg-rose-50 hover:bg-rose-600 hover:text-white text-rose-600 transition-colors"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 ))}
               </tbody>
@@ -265,8 +271,8 @@ export default function UsersPage() {
       </div>
 
       {/* Edit User Modal */}
-      {editUser && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+      {editUser && typeof document !== 'undefined' && createPortal(
+        <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl w-full max-w-md p-6 shadow-2xl space-y-4">
             <div className="flex justify-between items-center border-b border-slate-100 pb-3">
               <h3 className="text-lg font-black text-slate-900">Edit User Account</h3>
@@ -320,7 +326,8 @@ export default function UsersPage() {
               </div>
             </form>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );

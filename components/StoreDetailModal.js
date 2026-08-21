@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { X, Package, ShoppingCart, Users, UserCheck, DollarSign, Building2, Calendar, ShieldCheck, Tag } from "lucide-react";
 import { collection, getDocs, limit, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
@@ -14,6 +15,11 @@ export default function StoreDetailModal({ store, onClose }) {
   const [customers, setCustomers] = useState([]);
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   useEffect(() => {
     if (!store?.id) return;
@@ -87,10 +93,10 @@ export default function StoreDetailModal({ store, onClose }) {
     fetchSubcollections();
   }, [store?.id]);
 
-  if (!store) return null;
+  if (!store || !mounted) return null;
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
       <div className="bg-white rounded-3xl w-full max-w-4xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="bg-[#1E255E] text-white p-6 flex items-center justify-between">
@@ -339,4 +345,6 @@ export default function StoreDetailModal({ store, onClose }) {
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }

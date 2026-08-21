@@ -79,7 +79,7 @@ export default function RootLayout({ children }) {
       <head>
         <title>MAXmybill - Company Super Admin Dashboard</title>
         <meta name="description" content="POS Company Owner Central Control & Store Management Dashboard" />
-        <link rel="icon" href="/logo.png" type="image/png" />
+        <link rel="icon" href="max/logo.png" type="image/png" />
       </head>
       <body className={inter.className}>
         <AuthProvider>

@@ -1,17 +1,23 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom";
 import { X, Send, LifeBuoy, CheckCircle2, Clock } from "lucide-react";
 import { doc, updateDoc, arrayUnion, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { formatDate } from "@/lib/utils";
 
-export default function TicketResponseModal({ ticket, onClose, onRefresh }) {
+export default function TicketResponseModal({ ticket, onClose, onRefresh, hasEditAccess = true }) {
   const [replyText, setReplyText] = useState("");
   const [status, setStatus] = useState(ticket?.status || "open");
   const [sending, setSending] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  if (!ticket) return null;
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  if (!ticket || !mounted) return null;
 
   const handleSendReply = async (e) => {
     e.preventDefault();
@@ -45,8 +51,8 @@ export default function TicketResponseModal({ ticket, onClose, onRefresh }) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
+  const modalContent = (
+    <div className="fixed inset-0 z-[9999] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
       <div className="bg-white rounded-3xl w-full max-w-2xl shadow-2xl overflow-hidden border border-slate-100 flex flex-col max-h-[90vh]">
         {/* Header */}
         <div className="bg-[#1E255E] text-white p-6 flex items-center justify-between">
@@ -102,52 +108,65 @@ export default function TicketResponseModal({ ticket, onClose, onRefresh }) {
           )}
 
           {/* Reply Form */}
-          <form onSubmit={handleSendReply} className="space-y-4 pt-2">
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Update Ticket Status</label>
-              <select
-                value={status}
-                onChange={(e) => setStatus(e.target.value)}
-                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
-              >
-                <option value="open">Open (Unresolved)</option>
-                <option value="in_progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-                <option value="closed">Closed</option>
-              </select>
-            </div>
+          {hasEditAccess ? (
+            <form onSubmit={handleSendReply} className="space-y-4 pt-2">
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Update Ticket Status</label>
+                <select
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-semibold text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
+                >
+                  <option value="open">Open (Unresolved)</option>
+                  <option value="in_progress">In Progress</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="closed">Closed</option>
+                </select>
+              </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Send Admin Message</label>
-              <textarea
-                rows={4}
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder="Type your response to the store owner here..."
-                className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
-              ></textarea>
-            </div>
+              <div>
+                <label className="block text-xs font-bold uppercase text-slate-500 mb-1">Send Admin Message</label>
+                <textarea
+                  rows={4}
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder="Type your response to the store owner here..."
+                  className="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-[#4455DF]"
+                ></textarea>
+              </div>
 
-            <div className="flex justify-end space-x-3 pt-2">
+              <div className="flex justify-end space-x-3 pt-2">
+                <button
+                  type="button"
+                  onClick={onClose}
+                  className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={sending}
+                  className="px-5 py-2 rounded-xl text-xs font-extrabold text-white bg-[#4455DF] hover:bg-indigo-700 shadow-md shadow-indigo-500/30 flex items-center space-x-2 disabled:opacity-50"
+                >
+                  <Send className="w-4 h-4" />
+                  <span>{sending ? "Updating..." : "Submit Response"}</span>
+                </button>
+              </div>
+            </form>
+          ) : (
+            <div className="flex justify-end pt-2">
               <button
-                type="button"
                 onClick={onClose}
-                className="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-slate-100"
+                className="px-6 py-2.5 rounded-xl text-xs font-extrabold text-slate-700 bg-slate-200 hover:bg-slate-300 transition-colors"
               >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={sending}
-                className="px-5 py-2 rounded-xl text-xs font-extrabold text-white bg-[#4455DF] hover:bg-indigo-700 shadow-md shadow-indigo-500/30 flex items-center space-x-2 disabled:opacity-50"
-              >
-                <Send className="w-4 h-4" />
-                <span>{sending ? "Updating..." : "Submit Response"}</span>
+                Close Ticket Details
               </button>
             </div>
-          </form>
+          )}
         </div>
       </div>
     </div>
   );
+
+  return createPortal(modalContent, document.body);
 }
