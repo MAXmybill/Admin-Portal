@@ -1,10 +1,29 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { collection, onSnapshot, doc, updateDoc, serverTimestamp, deleteDoc, setDoc } from "firebase/firestore";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { Users, Search, Filter, Shield, Edit, X, Save, Lock, Unlock, Mail, Phone, Store, Settings, LifeBuoy, BookOpen, Megaphone, Trash2 } from "lucide-react";
+import { 
+  Users, 
+  Search, 
+  Filter, 
+  Shield, 
+  Edit, 
+  X, 
+  Save, 
+  Lock, 
+  Unlock, 
+  Mail, 
+  Phone, 
+  Store, 
+  Settings, 
+  LifeBuoy, 
+  BookOpen, 
+  Megaphone, 
+  Trash2, 
+  CreditCard 
+} from "lucide-react";
 import { db, secondaryAuth } from "@/lib/firebase";
 import { formatDate } from "@/lib/utils";
 import { useAuth } from "@/context/AuthContext";
@@ -23,6 +42,7 @@ export default function StaffPage() {
   const [permissions, setPermissions] = useState({
     canManageStores: false,
     canManageUsers: false,
+    canManagePricing: false,
     canManageSupport: false,
     canManageKnowledge: false,
     canModifySettings: false,
@@ -47,6 +67,7 @@ export default function StaffPage() {
     setPermissions({
       canManageStores: u.permissions?.canManageStores || false,
       canManageUsers: u.permissions?.canManageUsers || false,
+      canManagePricing: u.permissions?.canManagePricing || false,
       canManageSupport: u.permissions?.canManageSupport || false,
       canManageKnowledge: u.permissions?.canManageKnowledge || false,
       canModifySettings: u.permissions?.canModifySettings || false,
@@ -65,6 +86,7 @@ export default function StaffPage() {
         permissions: accessLevel === "edit" ? permissions : {
           canManageStores: false,
           canManageUsers: false,
+          canManagePricing: false,
           canManageSupport: false,
           canManageKnowledge: false,
           canModifySettings: false,
@@ -102,6 +124,7 @@ export default function StaffPage() {
             permissions: {
                 canManageStores: false,
                 canManageUsers: false,
+                canManagePricing: false,
                 canManageSupport: false,
                 canManageKnowledge: false,
                 canModifySettings: false,
@@ -273,6 +296,7 @@ export default function StaffPage() {
                           <div className="flex items-center gap-1.5 flex-wrap">
                             {user.permissions?.canManageStores && <div title="Stores" className="p-1 bg-slate-100 rounded text-slate-500"><Store className="w-3.5 h-3.5"/></div>}
                             {user.permissions?.canManageUsers && <div title="Users" className="p-1 bg-slate-100 rounded text-slate-500"><Users className="w-3.5 h-3.5"/></div>}
+                            {user.permissions?.canManagePricing && <div title="Subscription Pricing" className="p-1 bg-indigo-50 rounded text-[#4455DF] font-bold"><CreditCard className="w-3.5 h-3.5"/></div>}
                             {user.permissions?.canManageSupport && <div title="Support" className="p-1 bg-slate-100 rounded text-slate-500"><LifeBuoy className="w-3.5 h-3.5"/></div>}
                             {user.permissions?.canManageKnowledge && <div title="Knowledge Base" className="p-1 bg-slate-100 rounded text-slate-500"><BookOpen className="w-3.5 h-3.5"/></div>}
                             {user.permissions?.canModifySettings && <div title="Settings" className="p-1 bg-slate-100 rounded text-slate-500"><Settings className="w-3.5 h-3.5"/></div>}
@@ -369,6 +393,14 @@ export default function StaffPage() {
                 <label className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-50 rounded-lg">
                   <input type="checkbox" checked={permissions.canManageUsers} onChange={() => handleTogglePermission("canManageUsers")} className="w-4 h-4 text-[#4455DF] rounded border-slate-300 focus:ring-[#4455DF]" />
                   <span className="text-sm font-semibold text-slate-700">Can Manage Users</span>
+                </label>
+
+                <label className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-indigo-50 rounded-lg border border-indigo-100 bg-indigo-50/50">
+                  <input type="checkbox" checked={permissions.canManagePricing} onChange={() => handleTogglePermission("canManagePricing")} className="w-4 h-4 text-[#4455DF] rounded border-slate-300 focus:ring-[#4455DF]" />
+                  <span className="text-sm font-bold text-[#4455DF] flex items-center space-x-1.5">
+                    <CreditCard className="w-4 h-4 mr-1 text-[#4455DF]" />
+                    <span>Can Manage Subscription Plans & Pricing</span>
+                  </span>
                 </label>
                 
                 <label className="flex items-center space-x-3 cursor-pointer p-2 hover:bg-slate-50 rounded-lg">
