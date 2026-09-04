@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
@@ -8,8 +8,14 @@ import { useAuth } from "@/context/AuthContext";
 export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { login, user, loading: authLoading } = useAuth();
   const router = useRouter();
+
+  useEffect(() => {
+    if (!authLoading && user) {
+      router.replace("/");
+    }
+  }, [user, authLoading, router]);
 
   const handleGoogleSignIn = async (e) => {
     e.preventDefault();
@@ -18,8 +24,11 @@ export default function LoginPage() {
 
     try {
       await login();
-      router.push("/");
+      router.replace("/");
     } catch (err) {
+      if (err.code === "auth/popup-closed-by-user") {
+        return;
+      }
       console.error("Login failed:", err);
       setError(err.message || "Failed to sign in. Please verify your credentials.");
     } finally {
@@ -55,7 +64,7 @@ export default function LoginPage() {
           <div className="space-y-5">
             <button
               onClick={handleGoogleSignIn}
-              disabled={loading}
+              disabled={loading || (!!user && !authLoading)}
               className="w-full py-3.5 px-4 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-extrabold text-sm rounded-xl shadow-sm flex items-center justify-center space-x-3 transition-all transform active:scale-95 disabled:opacity-50"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -76,7 +85,7 @@ export default function LoginPage() {
                   d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
                 />
               </svg>
-              <span>{loading ? "Verifying..." : "Sign in with Google"}</span>
+              <span>{loading || (!!user && !authLoading) ? (loading ? "Verifying..." : "Redirecting...") : "Sign in with Google"}</span>
             </button>
           </div>
 

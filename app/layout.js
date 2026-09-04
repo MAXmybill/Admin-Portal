@@ -15,10 +15,18 @@ function AppShell({ children }) {
   const isLoginPage = pathname === "/login";
 
   useEffect(() => {
-    if (!loading && !user && !isLoginPage) {
-      router.push("/login");
+    if (!loading) {
+      if (!user && !isLoginPage) {
+        router.replace("/login");
+      } else if (user && isLoginPage) {
+        router.replace("/");
+      }
     }
   }, [user, loading, isLoginPage, router]);
+
+  if (isLoginPage) {
+    return <main className="min-h-screen bg-[#F4F7FA]">{children}</main>;
+  }
 
   if (loading) {
     return (
@@ -26,10 +34,6 @@ function AppShell({ children }) {
         <div className="inline-block animate-spin w-8 h-8 border-4 border-[#4455DF] border-t-transparent rounded-full"></div>
       </div>
     );
-  }
-
-  if (isLoginPage) {
-    return <main className="min-h-screen bg-[#F4F7FA]">{children}</main>;
   }
 
   if (!user && !isLoginPage) {

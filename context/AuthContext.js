@@ -20,6 +20,44 @@ const AuthContext = createContext({
   hasEditAccess: false,
 });
 
+async function verifyAndFetchUser(currentUser) {
+  if (!currentUser) {
+    return { isAuthorized: false, isBlocked: false, userDoc: null };
+  }
+
+  const email = (currentUser.email || "").trim().toLowerCase();
+
+  // Super admin check
+  if (email === 'maxmybillapp@gmail.com') {
+    let fetchedUserDoc = null;
+    try {
+      const docRef = doc(db, "users", currentUser.uid);
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) fetchedUserDoc = docSnap.data();
+    } catch (e) {
+      console.error("Error fetching super admin doc:", e);
+    }
+    return { isAuthorized: true, isBlocked: false, userDoc: fetchedUserDoc };
+  }
+
+  // Company staff check
+  try {
+    const q = query(collection(db, "companystaff"), where("email", "==", email));
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      const staffDoc = querySnapshot.docs[0].data();
+      if (staffDoc.isBlocked) {
+        return { isAuthorized: false, isBlocked: true, userDoc: null };
+      }
+      return { isAuthorized: true, isBlocked: false, userDoc: staffDoc };
+    }
+  } catch (e) {
+    console.error("Error fetching staff doc:", e);
+  }
+
+  return { isAuthorized: false, isBlocked: false, userDoc: null };
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [userDoc, setUserDoc] = useState(null);
@@ -28,31 +66,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
-        let isAuthorized = false;
-        let fetchedUserDoc = null;
-
-        if (currentUser.email?.trim().toLowerCase() === 'maxmybillapp@gmail.com') {
-          isAuthorized = true;
-          // Fetch super admin doc if it exists
-          try {
-            const docRef = doc(db, "users", currentUser.uid);
-            const docSnap = await getDoc(docRef);
-            if (docSnap.exists()) fetchedUserDoc = docSnap.data();
-          } catch (e) { console.error(e); }
-        } else {
-          try {
-            const userEmail = (currentUser.email || "").trim().toLowerCase();
-            const q = query(collection(db, "companystaff"), where("email", "==", userEmail));
-            const querySnapshot = await getDocs(q);
-            if (!querySnapshot.empty) {
-              const staffDoc = querySnapshot.docs[0].data();
-              if (!staffDoc.isBlocked) {
-                isAuthorized = true;
-                fetchedUserDoc = staffDoc;
-              }
-            }
-          } catch (e) { console.error(e); }
-        }
+        const { isAuthorized, userDoc: fetchedUserDoc } = await verifyAndFetchUser(currentUser);
 
         if (!isAuthorized) {
           await firebaseSignOut(auth);
@@ -78,28 +92,27 @@ export function AuthProvider({ children }) {
     const provider = new GoogleAuthProvider();
     const result = await signInWithPopup(auth, provider);
 
-    let isAuthorized = false;
-    if (result.user.email?.trim().toLowerCase() === 'maxmybillapp@gmail.com') {
-      isAuthorized = true;
-    } else {
-      const userEmail = (result.user.email || "").trim().toLowerCase();
-      const q = query(collection(db, "companystaff"), where("email", "==", userEmail));
-      const querySnapshot = await getDocs(q);
-      if (!querySnapshot.empty) {
-        const staffDoc = querySnapshot.docs[0].data();
-        if (!staffDoc.isBlocked) {
-          isAuthorized = true;
-        } else {
-          await firebaseSignOut(auth);
-          throw new Error('Your account has been deactivated. Please contact the administrator.');
-        }
-      }
+    const { isAuthorized, isBlocked, userDoc: fetchedUserDoc } = await verifyAndFetchUser(result.user);
+
+    if (isBlocked) {
+      await firebaseSignOut(auth);
+      setUser(null);
+      setUserDoc(null);
+      throw new Error('Your account has been deactivated. Please contact the administrator.');
     }
 
     if (!isAuthorized) {
       await firebaseSignOut(auth);
+      setUser(null);
+      setUserDoc(null);
       throw new Error('Unauthorized email. Access denied.');
     }
+
+    // Synchronously set authenticated user state before login() resolves
+    setUser(result.user);
+    setUserDoc(fetchedUserDoc);
+    setLoading(false);
+
     return result;
   };
 
