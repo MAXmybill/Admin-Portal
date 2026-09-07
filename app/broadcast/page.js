@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Megaphone, Send, CheckCircle2, Trash2, Clock } from "lucide-react";
+import { Megaphone, Send, CheckCircle2, Trash2, Clock, Bell } from "lucide-react";
 import { collection, addDoc, onSnapshot, doc, deleteDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { formatDate } from "@/lib/utils";
@@ -149,15 +149,18 @@ export default function BroadcastPage() {
               <div className="divide-y divide-slate-100">
                 {broadcasts.map((b) => (
                   <div key={b.id} className="py-4 flex items-start justify-between gap-4">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-indigo-50 text-[#4455DF]">
+                    <div className="space-y-1.5 min-w-0 flex-1">
+                      <div className="flex items-center space-x-2 flex-wrap gap-y-1">
+                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-indigo-50 text-[#4455DF] border border-indigo-100">
                           {b.targetAudience || "all"}
                         </span>
                         <h4 className="font-bold text-slate-800 text-sm">{b.title}</h4>
                       </div>
-                      <p className="text-xs text-slate-600 whitespace-pre-wrap">{b.message}</p>
-                      <span className="text-[10px] text-slate-400 block">{formatDate(b.createdAt)}</span>
+                      <p className="text-xs text-slate-600 whitespace-pre-wrap break-words leading-relaxed">{b.message}</p>
+                      <div className="flex items-center text-[10px] text-slate-400 space-x-1.5">
+                        <Clock className="w-3 h-3" />
+                        <span>{formatDate(b.createdAt)}</span>
+                      </div>
                     </div>
 
                     {hasEditAccess && (
