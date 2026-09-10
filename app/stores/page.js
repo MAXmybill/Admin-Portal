@@ -6,7 +6,7 @@ import { collection, onSnapshot, doc, updateDoc, setDoc, addDoc, serverTimestamp
 import { Store, Search, Filter, ShieldCheck, ShieldAlert, Edit, Eye, Plus, Calendar, Check, Lock, Unlock, X, Save, Receipt, TrendingUp, DollarSign, ArrowUpDown, ArrowUp, ArrowDown, RefreshCw } from "lucide-react";
 import { db } from "@/lib/firebase";
 import StoreDetailModal from "@/components/StoreDetailModal";
-import { formatDate, formatCurrency, calculateMembershipDays, isPlanExpired, isStoreActive } from "@/lib/utils";
+import { formatDate, parseDate, formatCurrency, calculateMembershipDays, isPlanExpired, isStoreActive } from "@/lib/utils";
 import {
   fetchStoreSalesMetrics,
   purgeAllLocalCaches,
@@ -290,31 +290,23 @@ export default function StoresPage() {
   });
 
   const sortedStores = [...filteredStores].sort((a, b) => {
-    let dateA = a.createdAt?.seconds ? a.createdAt.seconds : 0;
-    let dateB = b.createdAt?.seconds ? b.createdAt.seconds : 0;
-    
+    const dateA = parseDate(a.createdAt)?.getTime() ?? (parseInt(a.id, 10) || 0);
+    const dateB = parseDate(b.createdAt)?.getTime() ?? (parseInt(b.id, 10) || 0);
+
     const aSales = Number(salesMetricsMap[a.id]?.totalSales ?? 0);
     const bSales = Number(salesMetricsMap[b.id]?.totalSales ?? 0);
     const aBills = Number(salesMetricsMap[a.id]?.billCount ?? 0);
     const bBills = Number(salesMetricsMap[b.id]?.billCount ?? 0);
 
-    if (sortOrder === "sales_desc") {
-      return bSales - aSales;
-    }
-    if (sortOrder === "sales_asc") {
-      return aSales - bSales;
-    }
-    if (sortOrder === "bills_desc") {
-      return bBills - aBills;
-    }
-    if (sortOrder === "bills_asc") {
-      return aBills - bBills;
-    }
+    if (sortOrder === "sales_desc") return bSales - aSales;
+    if (sortOrder === "sales_asc") return aSales - bSales;
+    if (sortOrder === "bills_desc") return bBills - aBills;
+    if (sortOrder === "bills_asc") return aBills - bBills;
     if (sortOrder === "newest") return dateB - dateA;
     if (sortOrder === "oldest") return dateA - dateB;
     if (sortOrder === "name_asc") return (a.businessName || "").localeCompare(b.businessName || "");
     if (sortOrder === "name_desc") return (b.businessName || "").localeCompare(a.businessName || "");
-    return 0;
+    return dateB - dateA;
   });
 
   return (
@@ -571,38 +563,16 @@ export default function StoresPage() {
                   <th className="p-4">Owner Info</th>
                   <th className="p-4">Plan & Status</th>
                   <th className="p-4">
-                    <div className="flex items-center space-x-1.5">
-                      <span>Sales & Bills</span>
-                      <div className="flex items-center space-x-1">
-                        <button
-                          type="button"
-                          onClick={() => setSortOrder(sortOrder === "sales_desc" ? "sales_asc" : "sales_desc")}
-                          title={`Sort by Sales: ${sortOrder === "sales_desc" ? "Currently Descending (Click for Ascending)" : "Click for Descending"}`}
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center space-x-0.5 transition ${
-                            sortOrder.startsWith("sales")
-                              ? "bg-indigo-100 text-[#4455DF]"
-                              : "text-slate-400 hover:text-slate-700 hover:bg-slate-200"
-                          }`}
-                        >
-                          <span>Sales</span>
-                          {sortOrder === "sales_desc" && <span>↓</span>}
-                          {sortOrder === "sales_asc" && <span>↑</span>}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setSortOrder(sortOrder === "bills_desc" ? "bills_asc" : "bills_desc")}
-                          title={`Sort by Bills: ${sortOrder === "bills_desc" ? "Currently Descending (Click for Ascending)" : "Click for Descending"}`}
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-bold flex items-center space-x-0.5 transition ${
-                            sortOrder.startsWith("bills")
-                              ? "bg-indigo-100 text-[#4455DF]"
-                              : "text-slate-400 hover:text-slate-700 hover:bg-slate-200"
-                          }`}
-                        >
-                          <span>Bills</span>
-                          {sortOrder === "bills_desc" && <span>↓</span>}
-                          {sortOrder === "bills_asc" && <span>↑</span>}
-                        </button>
-                      </div>
+                    <div className="flex items-center space-x-2">
+                      <span>Sales & Invoices</span>
+                      <button
+                        type="button"
+                        onClick={() => setSortOrder(sortOrder === "sales_desc" ? "sales_asc" : "sales_desc")}
+                        title={`Sort by Sales (${sortOrder === "sales_desc" ? "High to Low" : "Low to High"})`}
+                        className={`p-1 rounded-md transition ${sortOrder.startsWith("sales") ? "bg-indigo-100 text-[#4455DF]" : "text-slate-400 hover:text-slate-700"}`}
+                      >
+                        <ArrowUpDown className="w-3.5 h-3.5" />
+                      </button>
                     </div>
                   </th>
                   <th className="p-4">Timeline</th>
@@ -630,26 +600,28 @@ export default function StoresPage() {
 
                     <td className="p-4">
                       <div className="font-bold text-slate-800">{store.ownerName || "N/A"}</div>
-                      <div className="text-xs text-slate-500">{store.businessPhone || store.phone || store.mobile || "No phone"}</div>
-                      <div className="text-[10px] text-slate-400">{store.businessEmail || store.email || store.ownerEmail || "No email"}</div>
+                      <div className="text-xs text-slate-500">{store.businessPhone || store.personalPhone || store.phone || store.mobile || "No phone"}</div>
+                      <div className="text-[10px] text-slate-400">{store.businessEmail || store.ownerEmail || store.email || "No email"}</div>
                     </td>
 
                     <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100 block w-max mb-1.5">
+                      <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100 whitespace-nowrap block w-max mb-1.5">
                         {store.plan || "Free"}
                       </span>
                       {isStoreActive(store) ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
                           Active
                         </span>
+                      ) : isPlanExpired(store) ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+                          Expired
+                        </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
-                          Inactive
-                          {isPlanExpired(store) && (
-                            <span className="ml-1 text-[9px] font-extrabold text-rose-600 uppercase tracking-tight">(Expired)</span>
-                          )}
+                          Disabled
                         </span>
                       )}
                     </td>
@@ -657,12 +629,11 @@ export default function StoresPage() {
                     <td className="p-4">
                       {salesMetricsMap[store.id] ? (
                         <div className="transition-all duration-300">
-                          <div className="font-mono font-black text-slate-900 text-sm flex items-center space-x-1.5">
-                            <span>{formatCurrency(salesMetricsMap[store.id].totalSales)}</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" title="Verified live from Firestore"></span>
+                          <div className="font-mono font-black text-slate-900 text-sm">
+                            {formatCurrency(salesMetricsMap[store.id].totalSales)}
                           </div>
                           <div className="flex items-center space-x-1 mt-1">
-                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-[#4455DF] border border-indigo-100">
+                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-[#4455DF] border border-indigo-100 whitespace-nowrap">
                               <Receipt className="w-3 h-3 text-[#4455DF]" />
                               <span>{salesMetricsMap[store.id].billCount} {salesMetricsMap[store.id].billCount === 1 ? "Bill" : "Bills"}</span>
                             </span>
@@ -678,16 +649,13 @@ export default function StoresPage() {
                       )}
                     </td>
 
-                    <td className="p-4 text-[10px] text-slate-500">
-                      <div className={isPlanExpired(store) ? "font-bold text-rose-600 flex items-center gap-1.5" : ""}>
-                        <span>Exp: {formatDate(store.subscriptionExpiryDate)}</span>
-                        {isPlanExpired(store) && (
-                          <span className="px-1.5 py-0.5 rounded bg-rose-100 text-rose-700 text-[9px] font-black uppercase tracking-wider">
-                            Expired
-                          </span>
-                        )}
+                    <td className="p-4 text-xs text-slate-500 whitespace-nowrap">
+                      <div className={`font-semibold whitespace-nowrap ${isPlanExpired(store) ? "text-rose-600" : "text-slate-700"}`}>
+                        Exp: {formatDate(store.subscriptionExpiryDate)}
                       </div>
-                      <div className="font-semibold text-emerald-600">{calculateMembershipDays(store.createdAt)} Days Member</div>
+                      <div className="text-[11px] font-medium text-slate-500 mt-0.5">
+                        {calculateMembershipDays(store.createdAt)} Days Member
+                      </div>
                     </td>
 
                     <td className="p-4 text-right">

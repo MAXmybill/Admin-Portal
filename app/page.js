@@ -2,12 +2,12 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { collection, onSnapshot } from "firebase/firestore";
-import { Store, Users, LifeBuoy, TrendingUp, Sparkles, ArrowUpRight } from "lucide-react";
+import { Store, Users, LifeBuoy, TrendingUp, Sparkles, ArrowUpRight, Eye } from "lucide-react";
 import { db } from "@/lib/firebase";
 import StatCard from "@/components/StatCard";
 import { StoreGrowthChart, PlanDistributionChart } from "@/components/Charts";
 import StoreDetailModal from "@/components/StoreDetailModal";
-import { formatDate, isPlanExpired, isStoreActive } from "@/lib/utils";
+import { formatDate, parseDate, isPlanExpired, isStoreActive } from "@/lib/utils";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -18,10 +18,13 @@ export default function DashboardPage() {
   const [selectedStore, setSelectedStore] = useState(null);
 
   useEffect(() => {
-    // Stream Stores
+    // Stream Stores (deduped by ID)
     const unsubStores = onSnapshot(collection(db, "store"), (snapshot) => {
-      const storeList = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-      setStores(storeList);
+      const storeMap = new Map();
+      snapshot.docs.forEach((doc) => {
+        storeMap.set(doc.id, { id: doc.id, ...doc.data() });
+      });
+      setStores(Array.from(storeMap.values()));
       setLoading(false);
     });
 
@@ -51,12 +54,18 @@ export default function DashboardPage() {
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
     return stores.filter((s) => {
-      let d;
-      if (s.createdAt?.toDate) d = s.createdAt.toDate();
-      else if (s.createdAt?.seconds) d = new Date(s.createdAt.seconds * 1000);
-      else if (s.createdAt) d = new Date(s.createdAt);
+      const d = parseDate(s.createdAt);
       return d && d >= thirtyDaysAgo;
     }).length;
+  }, [stores]);
+
+  // Sort newly created stores first
+  const recentStores = useMemo(() => {
+    return [...stores].sort((a, b) => {
+      const timeA = parseDate(a.createdAt)?.getTime() || (parseInt(a.id, 10) ? parseInt(a.id, 10) * 1000 : 0);
+      const timeB = parseDate(b.createdAt)?.getTime() || (parseInt(b.id, 10) ? parseInt(b.id, 10) * 1000 : 0);
+      return timeB - timeA;
+    }).slice(0, 5);
   }, [stores]);
 
   const activeStoresPercent = stores.length > 0 ? Math.round((activeStores / stores.length) * 100) : 0;
@@ -160,25 +169,25 @@ export default function DashboardPage() {
           </div>
         ) : (
           <div className="overflow-x-auto border border-slate-200 rounded-2xl">
-            <table className="w-full text-left text-sm min-w-[720px]">
-              <thead className="bg-slate-50 text-xs font-extrabold text-slate-500 uppercase border-b border-slate-200">
+            <table className="w-full text-left text-sm min-w-[760px]">
+              <thead className="bg-slate-50 text-xs font-extrabold text-slate-500 uppercase border-b border-slate-200 tracking-wider">
                 <tr>
-                  <th className="p-4">Store Name</th>
-                  <th className="p-4">Owner Name</th>
-                  <th className="p-4">Phone / Contact</th>
-                  <th className="p-4">Plan Tier</th>
-                  <th className="p-4">Status</th>
-                  <th className="p-4">Registered Date</th>
-                  <th className="p-4 text-right">Actions</th>
+                  <th className="p-4 whitespace-nowrap">Store Name</th>
+                  <th className="p-4 whitespace-nowrap">Owner Name</th>
+                  <th className="p-4 whitespace-nowrap">Phone / Contact</th>
+                  <th className="p-4 whitespace-nowrap">Plan Tier</th>
+                  <th className="p-4 whitespace-nowrap">Status</th>
+                  <th className="p-4 whitespace-nowrap">Registered Date</th>
+                  <th className="p-4 text-right whitespace-nowrap">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {stores.slice(0, 5).map((store) => (
+                {recentStores.map((store) => (
                   <tr
                     key={store.id}
                     className="hover:bg-slate-50 transition-colors"
                   >
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
                         <div className="w-9 h-9 rounded-xl bg-indigo-100 text-[#4455DF] flex items-center justify-center font-bold text-sm">
                           {store.businessName ? store.businessName[0].toUpperCase() : "S"}
@@ -189,36 +198,41 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </td>
-                    <td className="p-4 text-slate-700 font-semibold">{store.ownerName || "N/A"}</td>
-                    <td className="p-4 text-slate-600">{store.phone || store.mobile || "N/A"}</td>
-                    <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100">
+                    <td className="p-4 text-slate-700 font-semibold whitespace-nowrap">{store.ownerName || "N/A"}</td>
+                    <td className="p-4 text-xs font-medium text-slate-600 whitespace-nowrap">
+                      {store.businessPhone || store.personalPhone || store.phone || store.mobile || "No phone"}
+                    </td>
+                    <td className="p-4 whitespace-nowrap">
+                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100 whitespace-nowrap">
                         {store.plan || "Free"}
                       </span>
                     </td>
-                    <td className="p-4">
+                    <td className="p-4 whitespace-nowrap">
                       {isStoreActive(store) ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-emerald-500 animate-pulse"></span>
                           Active
                         </span>
+                      ) : isPlanExpired(store) ? (
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-amber-500"></span>
+                          Expired
+                        </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
                           <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-rose-500"></span>
                           Inactive
-                          {isPlanExpired(store) && (
-                            <span className="ml-1 text-[9px] font-extrabold text-rose-600 uppercase tracking-tight">(Expired)</span>
-                          )}
                         </span>
                       )}
                     </td>
-                    <td className="p-4 text-xs text-slate-500">{formatDate(store.createdAt)}</td>
-                    <td className="p-4 text-right">
+                    <td className="p-4 text-xs text-slate-500 whitespace-nowrap">{formatDate(store.createdAt)}</td>
+                    <td className="p-4 text-right whitespace-nowrap">
                       <button
                         onClick={() => setSelectedStore(store)}
-                        className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#4455DF] hover:text-white text-[#4455DF] font-bold text-xs transition-colors"
+                        className="px-3.5 py-1.5 rounded-xl bg-slate-100 hover:bg-[#4455DF] hover:text-white text-[#4455DF] font-bold text-xs transition-colors inline-flex items-center space-x-1.5 whitespace-nowrap"
                       >
-                        Inspect Store
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Inspect</span>
                       </button>
                     </td>
                   </tr>
