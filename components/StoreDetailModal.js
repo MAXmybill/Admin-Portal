@@ -38,19 +38,18 @@ import {
 import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { formatCurrency, formatDate, isPlanExpired, isStoreActive } from "@/lib/utils";
-import { getStoreCache, fetchStoreDataParallel } from "@/lib/storeDataCache";
+import { fetchStoreDataParallel } from "@/lib/storeDataCache";
 
 export default function StoreDetailModal({ store, onClose }) {
   const [activeTab, setActiveTab] = useState("overview");
 
-  // 0ms Synchronous Heuristic Cache Initialization
-  const initialCache = useMemo(() => (store?.id ? getStoreCache(store.id) : null), [store?.id]);
-  const [products, setProducts] = useState(() => initialCache?.products || []);
-  const [sales, setSales] = useState(() => initialCache?.sales || []);
-  const [staff, setStaff] = useState(() => initialCache?.staff || []);
-  const [customers, setCustomers] = useState(() => initialCache?.customers || []);
-  const [expenses, setExpenses] = useState(() => initialCache?.expenses || []);
-  const [loading, setLoading] = useState(() => !initialCache);
+  // Pure Live Data State
+  const [products, setProducts] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [staff, setStaff] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [expenses, setExpenses] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [mounted, setMounted] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -95,32 +94,16 @@ export default function StoreDetailModal({ store, onClose }) {
     setExpenses(data.expenses || []);
   };
 
-  async function loadStoreData(force = false) {
+  async function loadStoreData() {
     if (!store?.id) return;
     const storeId = store.id.toString();
 
-    // 1. 0ms Synchronous retrieval from hot memory / session cache
-    const cached = getStoreCache(storeId);
-    if (cached && !force) {
-      applyStoreData(cached);
-      setLoading(false);
-
-      // Background SWR revalidation (zero UI freeze)
-      fetchStoreDataParallel(storeId, false)
-        .then((fresh) => {
-          if (fresh) applyStoreData(fresh);
-        })
-        .catch(() => {});
-      return;
-    }
-
-    // 2. Parallel Fast Fetch
-    if (!cached) setLoading(true);
+    setLoading(true);
     try {
-      const fresh = await fetchStoreDataParallel(storeId, force);
+      const fresh = await fetchStoreDataParallel(storeId);
       if (fresh) applyStoreData(fresh);
     } catch (err) {
-      console.error("Error loading store data:", err);
+      console.error("Error loading live store data:", err);
     } finally {
       setLoading(false);
       setRefreshing(false);

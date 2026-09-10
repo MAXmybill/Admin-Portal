@@ -8,7 +8,6 @@ import StatCard from "@/components/StatCard";
 import { StoreGrowthChart, PlanDistributionChart } from "@/components/Charts";
 import StoreDetailModal from "@/components/StoreDetailModal";
 import { formatDate, isPlanExpired, isStoreActive } from "@/lib/utils";
-import { prefetchStoreWithAStar } from "@/lib/storeDataCache";
 import Link from "next/link";
 
 export default function DashboardPage() {
@@ -43,14 +42,6 @@ export default function DashboardPage() {
     };
   }, []);
 
-  // A* Heuristic: Eagerly prefetch top recent stores in background idle frames
-  useEffect(() => {
-    if (stores.length > 0) {
-      stores.slice(0, 5).forEach((s, idx) => {
-        prefetchStoreWithAStar(s.id, 300 - idx * 30);
-      });
-    }
-  }, [stores]);
 
   const activeStores = stores.filter((s) => isStoreActive(s)).length;
   const openTickets = tickets.filter((t) => t.status === "open" || t.status === "in_progress").length;
@@ -185,7 +176,6 @@ export default function DashboardPage() {
                 {stores.slice(0, 5).map((store) => (
                   <tr
                     key={store.id}
-                    onMouseEnter={() => prefetchStoreWithAStar(store.id, 1000)}
                     className="hover:bg-slate-50 transition-colors"
                   >
                     <td className="p-4">
@@ -226,8 +216,6 @@ export default function DashboardPage() {
                     <td className="p-4 text-right">
                       <button
                         onClick={() => setSelectedStore(store)}
-                        onMouseEnter={() => prefetchStoreWithAStar(store.id, 1000)}
-                        onFocus={() => prefetchStoreWithAStar(store.id, 1000)}
                         className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-[#4455DF] hover:text-white text-[#4455DF] font-bold text-xs transition-colors"
                       >
                         Inspect Store
