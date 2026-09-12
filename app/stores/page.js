@@ -50,6 +50,11 @@ function AnimatedCounter({ value, isCurrency = false }) {
   return <span>{Math.round(displayValue).toLocaleString("en-IN")}</span>;
 }
 
+// Plan badge helper - neutral styling with color removed
+function getPlanBadgeClass(plan) {
+  return "bg-slate-100 text-slate-700 border-slate-200 font-bold";
+}
+
 export default function StoresPage() {
   const [stores, setStores] = useState([]);
   const [search, setSearch] = useState("");
@@ -580,47 +585,85 @@ export default function StoresPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {sortedStores.map((store) => (
-                  <tr
-                    key={store.id}
-                    className="hover:bg-slate-50/80 transition-colors"
-                  >
+                {sortedStores.map((store) => {
+                  const expired = isPlanExpired(store);
+                  return (
+                    <tr
+                      key={store.id}
+                      className={`transition-colors ${
+                        expired 
+                          ? "bg-red-100 hover:bg-red-200/70" 
+                          : "hover:bg-slate-50/80"
+                      }`}
+                    >
                     <td className="p-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 rounded-2xl bg-[#4455DF] text-white flex items-center justify-center font-black text-sm shadow-md">
-                          {store.businessName ? store.businessName[0].toUpperCase() : "S"}
+                        <div className="px-2.5 py-1.5 min-w-[64px] text-center rounded-xl bg-[#4455DF] text-white font-mono font-black text-xs shadow-xs flex-shrink-0">
+                          #{store.id}
                         </div>
                         <div>
-                          <div className="font-extrabold text-slate-900">{store.businessName || "Unnamed Store"}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">ID: {store.id}</div>
-                          {store.gstin && <div className="text-[10px] text-indigo-600 font-mono">GST: {store.gstin}</div>}
+                          <div className="font-extrabold text-slate-900 text-sm leading-tight">{store.businessName || "Unnamed Store"}</div>
+                          {store.businessLocation ? (
+                            <div className="text-[11px] text-slate-500 font-medium truncate max-w-[170px] mt-0.5">{store.businessLocation}</div>
+                          ) : store.gstin ? (
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">GST: {store.gstin}</div>
+                          ) : null}
                         </div>
                       </div>
                     </td>
 
-                    <td className="p-4">
-                      <div className="font-bold text-slate-800">{store.ownerName || "N/A"}</div>
-                      <div className="text-xs text-slate-500">{store.businessPhone || store.personalPhone || store.phone || store.mobile || "No phone"}</div>
-                      <div className="text-[10px] text-slate-400">{store.businessEmail || store.ownerEmail || store.email || "No email"}</div>
+                    <td className="p-4 whitespace-nowrap">
+                      {(() => {
+                        const email = store.businessEmail || store.ownerEmail || store.email;
+                        const phone = store.businessPhone || store.personalPhone || store.phone || store.mobile;
+                        const hasEmail = Boolean(email && email !== "null" && email.trim() !== "");
+                        const hasPhone = Boolean(phone && phone !== "null" && phone.trim() !== "");
+
+                        // If store has email, they registered/signed in with Email; if email is null/empty, they signed in with Mobile OTP
+                        const signedWithEmail = hasEmail;
+                        const signedWithPhone = !hasEmail && hasPhone;
+
+                        return (
+                          <div>
+                            <div className="font-bold text-slate-800">{store.ownerName || "N/A"}</div>
+
+                            {/* Phone number row */}
+                            <div className="text-xs mt-0.5 flex items-center space-x-1.5 text-slate-600 font-medium">
+                              {signedWithPhone && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0 animate-pulse" title="Signed in with Mobile OTP"></span>
+                              )}
+                              <span>{hasPhone ? phone : "No phone"}</span>
+                            </div>
+
+                            {/* Email address row */}
+                            <div className="text-[11px] mt-0.5 flex items-center space-x-1.5 text-slate-400">
+                              {signedWithEmail && (
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0 animate-pulse" title="Signed in with Email"></span>
+                              )}
+                              <span className="truncate">{hasEmail ? email : "No email"}</span>
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </td>
 
                     <td className="p-4">
-                      <span className="px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100 whitespace-nowrap block w-max mb-1.5">
+                      <span className={`px-2.5 py-1 rounded-full text-xs font-bold border whitespace-nowrap block w-max mb-1.5 ${getPlanBadgeClass(store.plan)}`}>
                         {store.plan || "Free"}
                       </span>
                       {isStoreActive(store) ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 mr-1.5 animate-pulse"></span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5"></span>
                           Active
                         </span>
                       ) : isPlanExpired(store) ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full bg-amber-500 mr-1.5"></span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-600 border border-red-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-red-500 mr-1.5 animate-pulse"></span>
                           Expired
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full bg-rose-500 mr-1.5"></span>
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full bg-slate-400 mr-1.5"></span>
                           Disabled
                         </span>
                       )}
@@ -629,31 +672,31 @@ export default function StoresPage() {
                     <td className="p-4">
                       {salesMetricsMap[store.id] ? (
                         <div className="transition-all duration-300">
-                          <div className="font-mono font-black text-slate-900 text-sm">
+                          <div className="font-mono font-black text-slate-950 text-base">
                             {formatCurrency(salesMetricsMap[store.id].totalSales)}
                           </div>
                           <div className="flex items-center space-x-1 mt-1">
-                            <span className="inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-50 text-[#4455DF] border border-indigo-100 whitespace-nowrap">
-                              <Receipt className="w-3 h-3 text-[#4455DF]" />
+                            <span className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap shadow-2xs">
+                              <Receipt className="w-3 h-3 text-slate-500" />
                               <span>{salesMetricsMap[store.id].billCount} {salesMetricsMap[store.id].billCount === 1 ? "Bill" : "Bills"}</span>
                             </span>
                           </div>
                         </div>
                       ) : liveCalcProgress.isCalculating ? (
                         <div className="flex items-center space-x-2">
-                          <RefreshCw className="w-3.5 h-3.5 text-[#4455DF] animate-spin flex-shrink-0" />
-                          <span className="text-xs font-semibold text-indigo-600 animate-pulse">Calculating live...</span>
+                          <RefreshCw className="w-3.5 h-3.5 text-amber-600 animate-spin flex-shrink-0" />
+                          <span className="text-xs font-semibold text-amber-700 animate-pulse">Calculating live...</span>
                         </div>
                       ) : (
                         <div className="text-xs text-slate-400 font-medium">Pending scan</div>
                       )}
                     </td>
 
-                    <td className="p-4 text-xs text-slate-500 whitespace-nowrap">
-                      <div className={`font-semibold whitespace-nowrap ${isPlanExpired(store) ? "text-rose-600" : "text-slate-700"}`}>
+                    <td className="p-4 text-xs whitespace-nowrap">
+                      <div className={`font-bold whitespace-nowrap ${isPlanExpired(store) ? "text-rose-600" : "text-slate-800"}`}>
                         Exp: {formatDate(store.subscriptionExpiryDate)}
                       </div>
-                      <div className="text-[11px] font-medium text-slate-500 mt-0.5">
+                      <div className="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 mt-1">
                         {calculateMembershipDays(store.createdAt)} Days Member
                       </div>
                     </td>
@@ -663,7 +706,7 @@ export default function StoresPage() {
                         <button
                           onClick={() => setSelectedStore(store)}
                           title="View Store Details"
-                          className="p-2 rounded-lg bg-indigo-50 text-[#4455DF] hover:bg-[#4455DF] hover:text-white transition-colors"
+                          className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-[#4455DF] hover:text-white border border-slate-200 transition-colors shadow-2xs"
                         >
                           <Eye className="w-4 h-4" />
                         </button>
@@ -672,18 +715,14 @@ export default function StoresPage() {
                             <button
                               onClick={() => handleOpenEdit(store)}
                               title="Edit Plan & Expiry"
-                              className="p-2 rounded-lg bg-amber-50 text-amber-600 hover:bg-amber-600 hover:text-white transition-colors"
+                              className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-[#4455DF] hover:text-white border border-slate-200 transition-colors shadow-2xs"
                             >
                               <Edit className="w-4 h-4" />
                             </button>
                             <button
                               onClick={() => handleToggleStatus(store.id, store.isActive)}
                               title={store.isActive !== false ? "Deactivate Store" : "Activate Store"}
-                              className={`p-2 rounded-lg transition-colors ${
-                                store.isActive !== false
-                                  ? "bg-rose-50 text-rose-600 hover:bg-rose-600 hover:text-white"
-                                  : "bg-emerald-50 text-emerald-600 hover:bg-emerald-600 hover:text-white"
-                              }`}
+                              className="p-2 rounded-xl bg-slate-100 text-slate-700 hover:bg-rose-600 hover:text-white border border-slate-200 transition-colors shadow-2xs"
                             >
                               {store.isActive !== false ? <Lock className="w-4 h-4" /> : <Unlock className="w-4 h-4" />}
                             </button>
@@ -692,7 +731,8 @@ export default function StoresPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

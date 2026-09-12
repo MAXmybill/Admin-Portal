@@ -7,8 +7,13 @@ import { db } from "@/lib/firebase";
 import StatCard from "@/components/StatCard";
 import { StoreGrowthChart, PlanDistributionChart } from "@/components/Charts";
 import StoreDetailModal from "@/components/StoreDetailModal";
+import LiveActivityLog from "@/components/LiveActivityLog";
 import { formatDate, parseDate, isPlanExpired, isStoreActive } from "@/lib/utils";
 import Link from "next/link";
+
+function getPlanBadgeClass(plan) {
+  return "bg-slate-100 text-slate-700 border-slate-200 font-bold";
+}
 
 export default function DashboardPage() {
   const [stores, setStores] = useState([]);
@@ -141,6 +146,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      {/* Real-Time Live Store Activity Feed */}
+      <LiveActivityLog stores={stores} onInspectStore={(store) => setSelectedStore(store)} />
+
       {/* Recent Stores Table */}
       <div className="bg-white rounded-3xl p-6 border border-slate-200 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
@@ -182,19 +190,29 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium">
-                {recentStores.map((store) => (
-                  <tr
-                    key={store.id}
-                    className="hover:bg-slate-50 transition-colors"
-                  >
+                {recentStores.map((store) => {
+                  const expired = isPlanExpired(store);
+                  return (
+                    <tr
+                      key={store.id}
+                      className={`transition-colors ${
+                        expired 
+                          ? "bg-red-100 hover:bg-red-200/70" 
+                          : "hover:bg-slate-50"
+                      }`}
+                    >
                     <td className="p-4 whitespace-nowrap">
                       <div className="flex items-center space-x-3">
-                        <div className="w-9 h-9 rounded-xl bg-indigo-100 text-[#4455DF] flex items-center justify-center font-bold text-sm">
-                          {store.businessName ? store.businessName[0].toUpperCase() : "S"}
+                        <div className="px-2.5 py-1.5 min-w-[62px] text-center rounded-xl bg-[#4455DF] text-white font-mono font-black text-xs shadow-xs flex-shrink-0">
+                          #{store.id}
                         </div>
                         <div>
-                          <div className="font-bold text-slate-900">{store.businessName || "Unnamed Store"}</div>
-                          <div className="text-[10px] text-slate-400 font-mono">ID: {store.id}</div>
+                          <div className="font-bold text-slate-900 leading-tight">{store.businessName || "Unnamed Store"}</div>
+                          {store.businessLocation ? (
+                            <div className="text-[10px] text-slate-400 font-medium truncate max-w-[140px] mt-0.5">{store.businessLocation}</div>
+                          ) : (
+                            <div className="text-[10px] text-slate-400 font-mono mt-0.5">Store #{store.id}</div>
+                          )}
                         </div>
                       </div>
                     </td>
@@ -203,24 +221,24 @@ export default function DashboardPage() {
                       {store.businessPhone || store.personalPhone || store.phone || store.mobile || "No phone"}
                     </td>
                     <td className="p-4 whitespace-nowrap">
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-black bg-indigo-50 text-[#4455DF] border border-indigo-100 whitespace-nowrap">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-black border whitespace-nowrap ${getPlanBadgeClass(store.plan)}`}>
                         {store.plan || "Free"}
                       </span>
                     </td>
                     <td className="p-4 whitespace-nowrap">
                       {isStoreActive(store) ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-emerald-500 animate-pulse"></span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-semibold bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-slate-400"></span>
                           Active
                         </span>
                       ) : isPlanExpired(store) ? (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200 whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-amber-500"></span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-red-50 text-red-600 border border-red-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-red-500 animate-pulse"></span>
                           Expired
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 whitespace-nowrap">
-                          <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-rose-500"></span>
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-500 border border-slate-200 whitespace-nowrap">
+                          <span className="w-1.5 h-1.5 rounded-full mr-1.5 bg-slate-400"></span>
                           Inactive
                         </span>
                       )}
@@ -236,7 +254,8 @@ export default function DashboardPage() {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>
