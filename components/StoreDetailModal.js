@@ -845,6 +845,33 @@ export default function StoreDetailModal({ store, onClose }) {
                             {store.businessPhone || store.personalPhone || store.phone || store.mobile || "N/A"}
                           </span>
                         </div>
+                        {((Array.isArray(store.phoneHistory) && store.phoneHistory.length > 0) ||
+                          (Array.isArray(store.previousPhones) && store.previousPhones.length > 0)) && (
+                          <div className="flex flex-col gap-1.5 py-1.5 border-b border-slate-100/70">
+                            <div className="flex items-center justify-between">
+                              <span className="text-slate-500 text-xs flex-shrink-0">Phone History:</span>
+                              <span className="text-[10px] font-semibold text-slate-400">
+                                {(store.phoneHistory || store.previousPhones).length} previous {(store.phoneHistory || store.previousPhones).length === 1 ? 'number' : 'numbers'}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-1.5 justify-end">
+                              {(store.phoneHistory || store.previousPhones).map((item, idx) => {
+                                const phoneNum = typeof item === 'string' ? item : (item?.phone || item?.number || JSON.stringify(item));
+                                const dateStr = typeof item === 'object' && item?.changedAt ? (
+                                  typeof item.changedAt === 'string' ? new Date(item.changedAt).toLocaleDateString() :
+                                  item.changedAt?.toDate ? item.changedAt.toDate().toLocaleDateString() : ''
+                                ) : '';
+                                return (
+                                  <span key={idx} className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 text-[11px] font-mono border border-slate-200" title={dateStr ? `Changed on ${dateStr}` : undefined}>
+                                    <span className="text-slate-400">#</span>
+                                    <span>{phoneNum}</span>
+                                    {dateStr && <span className="text-[9px] text-slate-400 font-sans">({dateStr})</span>}
+                                  </span>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        )}
                         <div className="flex items-start justify-between gap-3 py-1.5 border-b border-slate-100/70">
                           <span className="text-slate-500 text-xs flex-shrink-0">Email:</span>
                           <span className="font-semibold text-slate-800 text-xs sm:text-sm text-right break-all">{store.ownerEmail || store.email || "N/A"}</span>
